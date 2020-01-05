@@ -1,59 +1,64 @@
 #!/usr/bin/perl
 
-unless (-e '.git') {
-    die "Put this script to your repo\n";
+$dir = shift;
+$search_phrase = shift;
+
+$git_dir = "$dir/.git";
+
+die "No git directory in $git_dir" unless (-e $git_dir);
+
+$git = "git --git-dir=\"$git_dir\"";
+
+@history = ();
+
+$current_commit = "";
+$author = "";
+$number_of_matches = 0;
+
+sub reset_state {
+    $current_commit = "";
+    $author = "";
+    $number_of_matches = 0;
 }
 
-sub next_month {
-    my %next_month_map = (
-        Jan => "Feb",
-        Feb => "Mar",
-        Mar => "Apr",
-        Apr => "Jun",
-        Jun => "Jul",
-        Jul => "Aug",
-        Aug => "Sep",
-        Sep => "Oct",
-        Oct => "Nov",
-        Nov => "Dec",
-        Dec => "Jan"
+sub process_commit {
+    my %info = (
+        "commit" => $current_commit,
+        "author" => $author,
+        "number_of_matches" => $number_of_matches,
     );
+    push @history, \%info;
+    reset_state;
+}
 
-    my $input = shift;
+open my $git_log, '-|', "$git log -S \"$search_phrase\" --pickaxe-regex -p" or die "Cannot do git log";
 
-    # Date:   Thu Oct 10 22:45:49 2019 +0100
-    if ($input =~ /^Date:\s{3}[a-zA-Z]{3}\s([a-zA-Z]{3})\s[0-9:\s]*([0-9]{4})\s\+[0-9]{4}$/) {
-        my $year = $2;
-        $year++ if $month eq "Jan";
-        my $month = $next_month_map{$1};
-        return "$month $year";
-    } else {
-        die "Couldn't parse an input: $input\n";
+while (<$git_log>) {
+    if (/^commit ([a-z0-9]+)/) {
+        if ($current_commit ne "") {
+            process_commit;
+        }
+        $current_commit = $1;
+    }
+    if (/^Author: ([a-zA-Z ]+) </) {
+        $author = $1;
+    }
+    if (/^\+.*$search_phrase/) {
+        $number_of_matches += 1;
+    } elsif (/^\-.*$search_phrase/) {
+        $number_of_matches -= 1;
     }
 }
+process_commit;
 
-my $initial_commit_date = `git log --reverse | head -n3 | tail -n1`;
+close $git_log;
 
-print "initial commit date: $initial_commit_date\n";
+foreach (@history) {
+    my %info = %$_;
 
-my $next = next_month $initial_commit_date;
+    my $author = $info{"author"};
+    my $count = $info{"number_of_matches"};
+    my $commit = $info{"commit"};
 
-print "next date is: $next\n";
-
-die "fixme\n";
-
-my $dir = shift;
-
-my $current_branch = `git rev-parse --abbrev-ref HEAD`;
-
-my $step = 10;
-
-my @occurances = ();
-
-sub check_for_occurances {
-    my $count =`grep -roh Observable $dir | wc -l | tr -d " "`;
-    push @occurances, $count;
+    print "$commit author: $author, count: $count\n";
 }
-
-
-system("git checkout $current_branch >/dev/null 2>&1");
