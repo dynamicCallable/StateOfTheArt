@@ -1,7 +1,16 @@
 #!/usr/bin/perl
 
-$dir = shift;
-$search_phrase = shift;
+@args = @ARGV;
+
+($depth_index) = grep { $args[$_] eq '--depth' || $args[$_] eq '-d' } (0 .. @args - 1);
+
+if ($depth_index && $args[$depth_index + 1]) {
+    $depth = $args[$depth_index + 1];
+    splice @args, $depth_index, 2;
+}
+
+$dir = shift @args;
+$search_phrase = shift @args;
 
 $git_dir = "$dir/.git";
 
@@ -36,6 +45,7 @@ open my $git_log, '-|', "$git log -S \"$search_phrase\" --pickaxe-regex -p" or d
 while (<$git_log>) {
     if (/^commit ([a-z0-9]+)/) {
         if ($current_commit ne "") {
+            last if $depth && --$depth <= 0;
             process_commit;
         }
         $current_commit = $1;
