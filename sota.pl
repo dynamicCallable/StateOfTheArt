@@ -40,7 +40,10 @@ while (<$git_log>) {
         }
         $current_commit = $1;
     }
-    if (/^Author: ([a-zA-Z ]+) </) {
+    if (/^\+\+\+/ || /^\-\-\-/) {
+        next;
+    }
+    if (/^Author: ([a-zA-Z \.]+) </) {
         $author = $1;
     }
     if (/^\+.*$search_phrase/) {
