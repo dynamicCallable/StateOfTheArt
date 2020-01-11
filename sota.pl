@@ -25,6 +25,12 @@ if ($depth_index && $args[$depth_index + 1]) {
     splice @args, $depth_index, 2;
 }
 
+while (my $index = index_of \@args, '--extension', '-e') {
+    my $extension = $args[$index + 1];
+    splice @args, $index, 2;
+    push @file_extensions, $extension;
+}
+
 $dir = shift @args;
 $search_phrase = shift @args;
 
@@ -38,6 +44,7 @@ sub reset_state {
     $current_commit = "";
     $author = "";
     $number_of_matches = 0;
+    $skip = 0;
 }
 
 sub process_commit {
@@ -57,14 +64,33 @@ open my $git_log, '-|', $log_command or die "Cannot do git log";
 while (<$git_log>) {
     if (/^commit ([a-z0-9]+)/) {
         if ($current_commit) {
-            last if $depth && --$depth <= 0;
-            process_commit;
+            if ($number_of_matches == 0) {
+                reset_state;
+            } elsif ($depth && --$depth <= 0) {
+                last;
+            } else {
+                process_commit;
+            }
         }
         $current_commit = $1;
     }
-    if (/^\+\+\+/ || /^\-\-\-/) {
+
+    next if /^\-\-\-/;
+
+    if (/^\+\+\+/) {
+        if (@file_extensions) {
+            my $exts = join '|', @file_extensions;
+            if (/\.($exts)$/) {
+                $skip = 0;
+            } else {
+                $skip = 1;
+            }
+        }
         next;
     }
+
+    next if $skip;
+
     if (/^Author: ([a-zA-Z \.]+) </) {
         $author = $1;
     }
