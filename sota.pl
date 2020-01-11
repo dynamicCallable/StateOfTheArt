@@ -34,10 +34,6 @@ die "No git directory in $git_dir" unless (-e $git_dir);
 
 $git = "git --git-dir=\"$git_dir\"";
 
-$current_commit = "";
-$author = "";
-$number_of_matches = 0;
-
 sub reset_state {
     $current_commit = "";
     $author = "";
@@ -60,7 +56,7 @@ open my $git_log, '-|', $log_command or die "Cannot do git log";
 
 while (<$git_log>) {
     if (/^commit ([a-z0-9]+)/) {
-        if ($current_commit ne "") {
+        if ($current_commit) {
             last if $depth && --$depth <= 0;
             process_commit;
         }
