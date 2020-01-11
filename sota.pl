@@ -53,11 +53,10 @@ sub process_commit {
     reset_state;
 }
 
-$log_command = "$git log -S \"$search_phrase\" --pickaxe-regex -p";
+@log_options = qw(--pickaxe-regex -p);
+push @log_options, '--reverse' if $reverse_index;
 
-if ($reverse_index) {
-    $log_command .= " --reverse";
-}
+$log_command = "$git log -S \"$search_phrase\" @log_options";
 
 open my $git_log, '-|', $log_command or die "Cannot do git log";
 
