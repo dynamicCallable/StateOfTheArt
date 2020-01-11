@@ -73,5 +73,6 @@ foreach (@history) {
     my $count = $info{"number_of_matches"};
     my $commit = $info{"commit"};
 
-    print "$commit author: $author, count: $count\n";
+    my $result = join "\t", $commit, $author, $count;
+    print $result, "\n";
 }
