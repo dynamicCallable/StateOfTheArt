@@ -18,8 +18,6 @@ die "No git directory in $git_dir" unless (-e $git_dir);
 
 $git = "git --git-dir=\"$git_dir\"";
 
-@history = ();
-
 $current_commit = "";
 $author = "";
 $number_of_matches = 0;
@@ -31,12 +29,8 @@ sub reset_state {
 }
 
 sub process_commit {
-    my %info = (
-        "commit" => $current_commit,
-        "author" => $author,
-        "number_of_matches" => $number_of_matches,
-    );
-    push @history, \%info;
+    my $result = join "\t", $current_commit, $author, $number_of_matches;
+    print $result, "\n";
     reset_state;
 }
 
@@ -65,14 +59,3 @@ while (<$git_log>) {
 process_commit;
 
 close $git_log;
-
-foreach (@history) {
-    my %info = %$_;
-
-    my $author = $info{"author"};
-    my $count = $info{"number_of_matches"};
-    my $commit = $info{"commit"};
-
-    my $result = join "\t", $commit, $author, $count;
-    print $result, "\n";
-}
