@@ -2,7 +2,23 @@
 
 @args = @ARGV;
 
-($depth_index) = grep { $args[$_] eq '--depth' || $args[$_] eq '-d' } (0 .. @args - 1);
+sub index_of {
+    my @array = @{ shift; };
+    my @variants = @_;
+    while (my ($index, $elem) = each @array) {
+        foreach (@variants) {
+            next if $elem ne $_;
+            return $index;
+        }
+    }
+}
+
+($depth_index) = index_of \@args, '--depth', '-d';
+($reverse_index) = index_of \@args, '--reverse', '-r';
+
+if ($reverse_index) {
+    splice @args, $reverse_index, 1;
+}
 
 if ($depth_index && $args[$depth_index + 1]) {
     $depth = $args[$depth_index + 1];
@@ -34,7 +50,13 @@ sub process_commit {
     reset_state;
 }
 
-open my $git_log, '-|', "$git log -S \"$search_phrase\" --pickaxe-regex -p" or die "Cannot do git log";
+$log_command = "$git log -S \"$search_phrase\" --pickaxe-regex -p";
+
+if ($reverse_index) {
+    $log_command .= " --reverse";
+}
+
+open my $git_log, '-|', $log_command or die "Cannot do git log";
 
 while (<$git_log>) {
     if (/^commit ([a-z0-9]+)/) {
