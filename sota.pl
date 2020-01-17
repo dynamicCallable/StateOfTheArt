@@ -43,12 +43,13 @@ $git = "git --git-dir=\"$git_dir\"";
 sub reset_state {
     $current_commit = "";
     $author = "";
+    $date = "";
     $number_of_matches = 0;
     $skip = 0;
 }
 
 sub process_commit {
-    my $result = join "\t", $current_commit, $author, $number_of_matches;
+    my $result = join "\t", $current_commit, $author, $date, $number_of_matches;
     print $result, "\n";
     reset_state;
 }
@@ -89,10 +90,9 @@ while (<$git_log>) {
     }
 
     next if $skip;
+    $author = $1 if /^Author: ([a-zA-Z \.]+) </;
+    $date = $1 if /^Date: +([a-zA-Z0-9:+ ]+)$/;
 
-    if (/^Author: ([a-zA-Z \.]+) </) {
-        $author = $1;
-    }
     if (/^\+.*$search_phrase/) {
         $number_of_matches += 1;
     } elsif (/^\-.*$search_phrase/) {
