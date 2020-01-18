@@ -65,8 +65,7 @@ func update(heightOfChart: Int,
         }
     }
 
-    // Cur if widthOfString is non-nil
-
+    // Clipping string's head to limit view width
     func cut(value: String) -> String {
         guard let widthOfString = widthOfString, value.count > widthOfString else { return value }
 
