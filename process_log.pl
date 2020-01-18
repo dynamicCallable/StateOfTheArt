@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+$|++;
+
 @args = @ARGV;
 
 sub index_of {
