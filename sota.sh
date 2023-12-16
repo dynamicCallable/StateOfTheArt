@@ -41,4 +41,4 @@ if [[ ! -d "$GIT_PATH" ]]; then
     exit 1
 fi
 
-git --git-dir="$GIT_PATH" log -S "$SEARCH_PHRASE" --pickaxe-regex -p $( (( $REVERSED )) && printf %s '--reverse' ) | ./process_log.pl
+git --git-dir="$GIT_PATH" log -S "$SEARCH_PHRASE" --pickaxe-regex -p $( (( $REVERSED )) && printf %s '--reverse' ) | ./process_log.pl | ./score.pl

@@ -51,10 +51,11 @@ while (<>) {
     $author = $1 if /^Author: ([a-zA-Z \.]+) </;
     $date = $1 if /^Date: +([a-zA-Z0-9:+ ]+)$/;
 
+    # TODO: Check number of matches in the line as well
     if (/^\+.*$search_phrase/) {
-        $number_of_matches += 1;
+        $number_of_matches++;
     } elsif (/^\-.*$search_phrase/) {
-        $number_of_matches -= 1;
+        $number_of_matches--;
     }
 }
 process_commit;
